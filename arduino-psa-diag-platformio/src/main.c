@@ -112,7 +112,7 @@ Thread sendAdditionalDiagFramesThread = Thread();
 void setup() {
   pinMode(LED_FEEDBACK, OUTPUT);
   digitalWrite(LED_FEEDBACK, HIGH);
-  Serial.begin(SERIAL_SPEED);
+  SerialUSB.begin(SERIAL_SPEED);
 
   CAN0.reset();
   CAN0.setBitrate(CAN_SPEED, CAN_FREQ);
@@ -233,10 +233,10 @@ void receiveAdditionalDiagFrame(can_frame frame, bool encap) {
       multiframeOverflow = true;
       if (Dump) {
         i = (framePos - 1) / 2;
-        Serial.print("Warning: Truncated data ");
-        Serial.print(i);
-        Serial.print("/");
-        Serial.println(receiveDiagFrameSize);
+        SerialUSB.print("Warning: Truncated data ");
+        SerialUSB.print(i);
+        SerialUSB.print("/");
+        SerialUSB.println(receiveDiagFrameSize);
       }
       receiveDiagFrameSize = 0;
       break;
@@ -252,8 +252,8 @@ void receiveAdditionalDiagFrame(can_frame frame, bool encap) {
     if (frame.data[0] == 0x2F) {
       if (Dump && receiveDiagFrameAlreadyFlushed == 0) {
         snprintf(tmp, 4, "%02X", frame.can_id);
-        Serial.print(tmp);
-        Serial.print(":");
+        SerialUSB.print(tmp);
+        SerialUSB.print(":");
       }
 
       receiveDiagFrameAlreadyFlushed += receiveDiagFrameRead;
@@ -261,21 +261,21 @@ void receiveAdditionalDiagFrame(can_frame frame, bool encap) {
       receiveDiagFrameData[framePos + 1] = '\0';
       receiveDiagDataPos = receiveDiagFrameRead = 0;
 
-      Serial.print(receiveDiagFrameData);
+      SerialUSB.print(receiveDiagFrameData);
     }
   }
 
   if ((receiveDiagFrameRead + receiveDiagFrameAlreadyFlushed) == (receiveDiagFrameSize * 2) || framePos > MAX_DATA_LENGTH) { // Data complete or overflow
     if (Dump && receiveDiagFrameAlreadyFlushed == 0) {
       snprintf(tmp, 4, "%02X", frame.can_id);
-      Serial.print(tmp);
-      Serial.print(":");
+      SerialUSB.print(tmp);
+      SerialUSB.print(":");
     }
 
     receiveDiagFrameData[receiveDiagFrameRead] = '\0';
     receiveDiagDataPos = receiveDiagFrameRead = receiveDiagFrameAlreadyFlushed = receiveDiagFrameSize = 0;
 
-    Serial.println(receiveDiagFrameData);
+    SerialUSB.println(receiveDiagFrameData);
 
     framesDelay = CAN_DEFAULT_DELAY; // Restore default delay
   }
@@ -414,9 +414,9 @@ void sendDiagFrame(char * data, int frameFullLen, bool Raw) {
       frameLen++;
     } else {
       if (data[i] == -16) {
-        Serial.println("000000");
+        SerialUSB.println("000000");
       } else {
-        Serial.println("7F0000");
+        SerialUSB.println("7F0000");
       }
       return;
     }
@@ -552,8 +552,8 @@ void recvWithTimeout() {
   char rc;
 
   lastCharMillis = millis();
-  while (Serial.available() > 0) {
-    rc = Serial.read();
+  while (SerialUSB.available() > 0) {
+    rc = SerialUSB.read();
 
     receiveDiagFrameData[pos] = rc;
     receiveDiagFrameRead = pos;
@@ -577,10 +577,10 @@ void recvWithTimeout() {
         LIN = 0;
         Dump = false;
         sendKeepAlives = false;
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'T') { // Change CAN multiframes delay
         framesDelayInput = strtoul(receiveDiagFrameData + 1, NULL, 10);
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == ':') { // Unlock with key
         pos = 0;
         char * ids = strtok(receiveDiagFrameData + 1, ":");
@@ -614,45 +614,45 @@ void recvWithTimeout() {
 
         waitingUnlock = true;
       } else if (receiveDiagFrameData[0] == 'V') {
-        Serial.println(SketchVersion);
+        SerialUSB.println(SketchVersion);
       } else if (receiveDiagFrameData[0] == 'L') {
         LIN = strtoul(receiveDiagFrameData + 1, NULL, 16);
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'W') {
         customFrameSize = true;
         receiveDiagFrameSize = strtoul(receiveDiagFrameData + 1, NULL, 10) * 2;
-        Serial.println("WOK");
+        SerialUSB.println("WOK");
       } else if (receiveDiagFrameData[0] == 'U') {
         LIN = 0;
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'N') {
         Dump = false;
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'X') {
         Dump = true;
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'K') {
         sendKeepAlives = true;
         if (receiveDiagFrameData[1] == 'U' || receiveDiagFrameData[1] == 'K') {
           sendKeepAliveType = receiveDiagFrameData[1];
         }
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'S') {
         sendKeepAlives = false;
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == 'R') {
         CAN0.reset();
         CAN0.setBitrate(CAN_SPEED, CAN_FREQ);
         while (CAN0.setNormalMode() != MCP2515::ERROR_OK) {
           delay(100);
         }
-        Serial.println("OK");
+        SerialUSB.println("OK");
       } else if (receiveDiagFrameData[0] == '?') {
         snprintf(tmp, 4, "%02X", CAN_EMIT_ID);
-        Serial.print(tmp);
-        Serial.print(":");
+        SerialUSB.print(tmp);
+        SerialUSB.print(":");
         snprintf(tmp, 4, "%02X", CAN_RECV_ID);
-        Serial.println(tmp);
+        SerialUSB.println(tmp);
       } else if (receiveDiagFrameData[0] == '#' && receiveDiagFrameRead <= (16 + 1) && (receiveDiagFrameRead - 1) % 2 == 0) { // Send RAW frames
         sendDiagFrame(receiveDiagFrameData + 1, receiveDiagFrameRead - 1, true);
 
@@ -680,7 +680,7 @@ void recvWithTimeout() {
         waitingReplySerialCMD = true;
         lastCMDSent = millis();
       } else {
-        Serial.println("7F0000");
+        SerialUSB.println("7F0000");
       }
       pos = 0;
     } else {
@@ -692,7 +692,7 @@ void recvWithTimeout() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
+  if (SerialUSB.available() > 0) {
     recvWithTimeout();
   } else {
     timerCallback();
@@ -769,13 +769,13 @@ void parseCAN() {
             framesDelay = canMsgRcvBuffer[t].data[2];
           } else {
             snprintf(tmp, 4, "%02X", id);
-            Serial.print(tmp);
-            Serial.print(":");
+            SerialUSB.print(tmp);
+            SerialUSB.print(":");
             for (int i = 1; i < len; i++) { // Strip first byte = Data length
               snprintf(tmp, 3, "%02X", canMsgRcvBuffer[t].data[i]);
-              Serial.print(tmp);
+              SerialUSB.print(tmp);
             }
-            Serial.println();
+            SerialUSB.println();
           }
         } else {
           if (id == CAN_RECV_ID) {
@@ -824,9 +824,9 @@ void parseCAN() {
             } else {
               for (int i = 1; i < len; i++) { // Strip first byte = Data length
                 snprintf(tmp, 3, "%02X", canMsgRcvBuffer[t].data[i]);
-                Serial.print(tmp);
+                SerialUSB.print(tmp);
               }
-              Serial.println();
+              SerialUSB.println();
             }
           }
         }
@@ -856,7 +856,7 @@ void parseCAN() {
         }
 
         if (sendKeepAlives && lastKeepAliveReceived > 0 && millis() - lastKeepAliveReceived >= 1000) { // ECU connection lost, no answer
-          Serial.println("7F3E03"); // Custom error
+          SerialUSB.println("7F3E03"); // Custom error
 
           sendKeepAlives = false; // Stop sending Keep-Alives
         }
@@ -883,9 +883,9 @@ void parseCAN() {
 
           if (Dump) {
             snprintf(tmp, 4, "%02X", CAN_EMIT_ID);
-            Serial.print(tmp);
-            Serial.print(":");
-            Serial.println(UnlockCMD_Seed);
+            SerialUSB.print(tmp);
+            SerialUSB.print(":");
+            SerialUSB.println(UnlockCMD_Seed);
           }
 
           sendDiagFrame(UnlockCMD_Seed, strlen(UnlockCMD_Seed), false);
