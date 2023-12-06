@@ -1,2 +1,6 @@
 
 *.zip
+
+.pio/
+.vscode/*
+!.vscode/extensions.json
