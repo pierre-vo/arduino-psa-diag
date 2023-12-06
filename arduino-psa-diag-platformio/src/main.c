@@ -36,6 +36,7 @@ all copies or substantial portions of the Software.
 #define CAN_DEFAULT_DELAY 4 // Delay between multiframes
 #define MAX_DATA_LENGTH 512
 #define CS_PIN_CAN0 PA_4
+#define LED_FEEDBACK LED_BUILTIN
 #define SERIAL_SPEED 115200
 #define CAN_SPEED CAN_500KBPS // Diagnostic CAN bus - High Speed
 #define CAN_FREQ MCP_8MHZ // Switch to 16MHZ if you have a 16Mhz module
@@ -109,6 +110,8 @@ Thread parseCANThread = Thread();
 Thread sendAdditionalDiagFramesThread = Thread();
 
 void setup() {
+  pinMode(LED_FEEDBACK, OUTPUT);
+  digitalWrite(LED_FEEDBACK, HIGH);
   Serial.begin(SERIAL_SPEED);
 
   CAN0.reset();
@@ -556,6 +559,7 @@ void recvWithTimeout() {
     receiveDiagFrameRead = pos;
 
     if (millis() - lastCharMillis >= 1000 || rc == '\n' || pos >= MAX_DATA_LENGTH) {
+      digitalWrite(LED_FEEDBACK, !digitalRead(LED_FEEDBACK));
       receiveDiagFrameData[pos] = '\0';
 
       if (receiveDiagFrameData[0] == '>') { // IDs Pair changing
