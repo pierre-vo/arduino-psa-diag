@@ -20,7 +20,7 @@ all copies or substantial portions of the Software.
 /////////////////////
 //    Libraries    //
 /////////////////////
-
+#include <Arduino.h>
 #include <EEPROM.h>
 #include <SPI.h>
 #include <mcp2515.h> // https://github.com/autowp/arduino-mcp2515 + https://github.com/watterott/Arduino-Libs/tree/master/digitalWriteFast
@@ -35,11 +35,18 @@ all copies or substantial portions of the Software.
 #define CAN_RCV_BUFFER 40
 #define CAN_DEFAULT_DELAY 4 // Delay between multiframes
 #define MAX_DATA_LENGTH 512
-#define CS_PIN_CAN0 10
+#define CS_PIN_CAN0 PA_4
 #define SERIAL_SPEED 115200
 #define CAN_SPEED CAN_500KBPS // Diagnostic CAN bus - High Speed
-#define CAN_FREQ MCP_16MHZ // Switch to 8MHZ if you have a 8Mhz module
+#define CAN_FREQ MCP_8MHZ // Switch to 16MHZ if you have a 16Mhz module
 #define GETSEED_MAX_ATTEMPTS 8
+
+// Prototypes
+void readCAN();
+void parseCAN();
+void timerCallback();
+void sendKeepAlive();
+void sendAdditionalDiagFrames();
 
 ////////////////////
 // Initialization //
